@@ -307,18 +307,22 @@ function updateNav(){
 
 function renderHeader(){
   var me = cache.me;
-  var hour = new Date().getHours();
-  var greet = hour<12 ? "Good morning" : hour<18 ? "Good afternoon" : "Good evening";
   var titleEl = document.getElementById("greetingText");
   var subEl = document.getElementById("dateSub");
-  if(currentTab==="today") titleEl.textContent = greet + (me.name ? ", " + me.name.split(" ")[0] : "");
+  if(currentTab==="today"){
+    var todayIso = todayISO();
+    var yestIso = isoFromDate((function(){var d=new Date(); d.setDate(d.getDate()-1); return d;})());
+    if(selectedDayISO===todayIso) titleEl.textContent = "Today";
+    else if(selectedDayISO===yestIso) titleEl.textContent = "Yesterday";
+    else titleEl.textContent = new Date(selectedDayISO+"T00:00:00").toLocaleDateString(undefined,{month:"short", day:"numeric"});
+  }
   else if(currentTab==="leaderboard") titleEl.textContent = "Leaderboard";
   else titleEl.textContent = "Monsters\u2019 Club";
-  subEl.textContent = new Date().toLocaleDateString(undefined, {weekday:"long", month:"long", day:"numeric"});
+  subEl.textContent = "Hi " + me.name.split(" ")[0] + (me.is_admin ? " \u00b7 Admin" : "");
 
   var meStrip = document.getElementById("meStrip");
-  meStrip.innerHTML = '<div class="avatar" style="background:'+me.color+'">'+initials(me.name)+'</div>'+
-    '<div class="me-strip-info"><div class="me-strip-name">'+escapeHtml(me.name)+'</div><div class="me-strip-role">'+(me.is_admin?"Admin":"Member")+'</div></div>';
+  meStrip.innerHTML = '';
+  meStrip.style.display = "none";
 }
 
 function ringSVG(pct, color){
@@ -329,55 +333,84 @@ function ringSVG(pct, color){
     '</svg><div class="ring-label">'+pct+'%</div></div>';
 }
 
+var selectedDayISO = todayISO();
+var HUE_CLASSES = ["hue-1","hue-2","hue-3","hue-4","hue-5","hue-6","hue-7","hue-8"];
+
 function renderToday(){
   var main = document.getElementById("mainContent");
   var p = cache.me;
-  var iso = todayISO();
+  var iso = selectedDayISO;
+  var isToday = iso === todayISO();
   var habits = habitsFor(p.id);
   var pct = completionPctForPerson(p, iso);
   var doneCount = habits.filter(function(h){return !!logsFor(h.id)[iso];}).length;
 
   var html = '';
+
+  // Filter pill + mood badge row
+  html += '<div class="filter-row">'+
+    '<button class="filter-pill"><i class="ti ti-list-check"></i> All</button>'+
+    '<div class="mood-badge"><i class="ti ti-mood-smile"></i></div>'+
+  '</div>';
+
+  // Date strip
+  html += '<div class="date-strip">';
+  var days = weekDaysAround(iso);
+  days.forEach(function(d){
+    var di = isoFromDate(d);
+    var sel = di===iso;
+    var future = di > todayISO();
+    var hasAny = habits.some(function(h){ return !!logsFor(h.id)[di]; });
+    html += '<div class="date-col'+(sel?" selected":"")+(future?" future":"")+'" data-day="'+di+'">'+
+      '<div class="date-col-label">'+dayLetter(d)+'</div>'+
+      '<div class="date-circle'+(hasAny?" has-progress":"")+'">'+d.getDate()+'</div>'+
+    '</div>';
+  });
+  html += '</div>';
+
+  html += '<div class="section-row"><div class="section-title">'+(isToday?"Today\u2019s habits":"Habits")+'</div><button class="section-action" id="addHabitBtn"><i class="ti ti-plus" style="font-size:15px"></i>Add</button></div>';
+
+  if(habits.length===0){
+    html += '<div class="empty-state"><div class="empty-state-circle"><i class="ti ti-target-arrow"></i></div><div class="empty-state-title">Nothing here yet. Tap Add to create your first habit and start your streak.</div></div>';
+  } else {
+    html += '<div class="habit-list" id="habitList">';
+    habits.forEach(function(h, idx){
+      var hue = HUE_CLASSES[idx % HUE_CLASSES.length];
+      var log = logsFor(h.id);
+      var doneToday = !!log[iso];
+      var streak = streakFor(h);
+      var fillPct = doneToday ? 100 : 0;
+      html += '<div class="habit-row-wrap" data-habit-id="'+h.id+'">';
+      html += '<div class="habit-card '+hue+'">';
+      html += '<div class="habit-progress-fill" style="width:'+fillPct+'%"></div>';
+      html += '<div class="habit-color-dot"><i class="ti '+h.icon+'"></i></div>';
+      html += '<div class="habit-info"><div class="habit-name">'+escapeHtml(h.name)+'</div>';
+      html += '<div class="habit-progress-label">'+(doneToday?"Done":"Not done yet")+'</div>';
+      html += '</div>';
+      if(streak>0){
+        html += '<div class="habit-streak-badge"><i class="ti ti-flame" style="font-size:12px"></i>'+streak+' Day'+(streak===1?"":"s")+'</div>';
+      }
+      html += '<button class="check-btn'+(doneToday?" done":"")+'" data-habit="'+h.id+'" data-day="'+iso+'" aria-label="Mark done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="section-row" style="margin-top:22px;"><div class="section-title" style="font-size:15px;">Your scores</div></div>';
   html += '<div class="summary-card">'+ringSVG(pct,p.color)+
-    '<div class="summary-text"><div class="summary-title">Your day</div>'+
-    '<div class="summary-sub">'+doneCount+' of '+habits.length+' habits done today</div>'+
+    '<div class="summary-text"><div class="summary-title">'+doneCount+' of '+habits.length+' done '+(isToday?"today":"that day")+'</div>'+
     '<div class="summary-stats">'+
       '<div class="stat"><div class="stat-num">'+weeklyScoreForPerson(p)+'%</div><div class="stat-label">7-day score</div></div>'+
       '<div class="stat"><div class="stat-num">'+totalScoreForPerson(p)+'%</div><div class="stat-label">'+TOTAL_WINDOW_DAYS+'-day score</div></div>'+
     '</div></div></div>';
 
-  html += '<div class="section-row"><div class="section-title">Today\u2019s habits</div><button class="section-action" id="addHabitBtn"><i class="ti ti-plus" style="font-size:15px"></i>Add</button></div>';
-
-  if(habits.length===0){
-    html += '<div class="empty-state"><i class="ti ti-list-check"></i><div class="empty-state-title">No habits yet</div><div class="empty-state-sub">Tap Add to create your first habit.</div></div>';
-  } else {
-    html += '<div class="habit-list" id="habitList">';
-    var days = last7Days();
-    habits.forEach(function(h){
-      var col = HABIT_COLORS[h.color_idx % HABIT_COLORS.length];
-      var log = logsFor(h.id);
-      var doneToday = !!log[iso];
-      var streak = streakFor(h);
-      html += '<div class="habit-row-wrap" data-habit-id="'+h.id+'"><div class="habit-card">';
-      html += '<div class="habit-color-dot" style="background:'+col.soft+'; color:'+col.bg+'"><i class="ti '+h.icon+'"></i></div>';
-      html += '<div class="habit-info"><div class="habit-name">'+escapeHtml(h.name)+'</div>';
-      html += '<div class="habit-streak"><i class="ti ti-flame" style="font-size:13px;color:'+(streak>0?"#E8A23B":"var(--ink-faint)")+'"></i>'+streak+' day streak</div>';
-      html += '<div class="week-dots">';
-      days.forEach(function(d){
-        var di = isoFromDate(d), isToday = di===iso, done = !!log[di];
-        html += '<button class="day-dot'+(done?" done":"")+(isToday?" today":"")+'" style="'+(done?"background:"+col.bg:"")+'" data-day="'+di+'" data-habit="'+h.id+'">'+(done?'<i class="ti ti-check" style="font-size:11px"></i>':dayLetter(d))+'</button>';
-      });
-      html += '</div></div>';
-      html += '<button class="check-btn'+(doneToday?" done":"")+'" data-habit="'+h.id+'" data-day="'+iso+'" aria-label="Mark done today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>';
-      html += '</div></div>';
-    });
-    html += '</div>';
-  }
   main.innerHTML = html;
 
   document.getElementById("addHabitBtn") && document.getElementById("addHabitBtn").addEventListener("click", function(){ openHabitSheet(null); });
-  main.querySelectorAll(".check-btn").forEach(function(btn){ btn.addEventListener("click", function(){ toggleLog(btn, btn.dataset.habit, btn.dataset.day); }); });
-  main.querySelectorAll(".day-dot").forEach(function(btn){ btn.addEventListener("click", function(){ toggleLog(btn, btn.dataset.habit, btn.dataset.day); }); });
+  main.querySelectorAll(".check-btn").forEach(function(btn){ btn.addEventListener("click", function(e){ e.stopPropagation(); toggleLog(btn, btn.dataset.habit, btn.dataset.day); }); });
+  main.querySelectorAll(".date-col").forEach(function(col){
+    col.addEventListener("click", function(){ selectedDayISO = col.dataset.day; renderToday(); });
+  });
   main.querySelectorAll(".habit-card").forEach(function(card){
     var wrap = card.parentElement;
     var habitId = wrap.dataset.habitId;
@@ -390,6 +423,21 @@ function renderToday(){
     });
     ["pointerup","pointerleave","pointercancel"].forEach(function(ev){ card.addEventListener(ev, function(){ clearTimeout(holdTimer); }); });
   });
+}
+
+function weekDaysAround(centerISO){
+  var center = new Date(centerISO+"T00:00:00");
+  var dow = center.getDay(); // 0=Sun..6=Sat
+  var mondayOffset = dow===0 ? -6 : 1-dow;
+  var monday = new Date(center);
+  monday.setDate(monday.getDate()+mondayOffset);
+  var arr = [];
+  for(var i=0;i<7;i++){
+    var d = new Date(monday);
+    d.setDate(d.getDate()+i);
+    arr.push(d);
+  }
+  return arr;
 }
 
 async function toggleLog(btnEl, habitId, dayISO){
@@ -422,7 +470,7 @@ function renderLeaderboard(){
   var main = document.getElementById("mainContent");
   var me = cache.me;
   if(cache.people.length===0){
-    main.innerHTML = '<div class="empty-state"><i class="ti ti-trophy"></i><div class="empty-state-title">No one to rank yet</div></div>';
+    main.innerHTML = '<div class="empty-state"><div class="empty-state-circle"><i class="ti ti-trophy"></i></div><div class="empty-state-title">No one to rank yet.</div></div>';
     return;
   }
   var html = '<div class="lb-toggle">'+
@@ -470,13 +518,13 @@ function renderPeople(){
   if(!me.is_admin) html += '<div class="lb-sub-label" style="padding:0 20px 14px;">Only admins can add or remove members. Want a change? Ask an admin.</div>';
 
   if(cache.people.length===0){
-    html += '<div class="empty-state"><i class="ti ti-users"></i><div class="empty-state-title">No members yet</div></div>';
+    html += '<div class="empty-state"><div class="empty-state-circle"><i class="ti ti-users"></i></div><div class="empty-state-title">It\u2019s always nice to have someone by your side. Ask an admin to add the first member.</div></div>';
   } else {
-    html += '<div class="habit-list">';
+    html += '<div class="member-list">';
     cache.people.forEach(function(p){
-      html += '<div class="habit-card"><div class="avatar" style="width:44px;height:44px;background:'+p.color+'">'+initials(p.name)+'</div>';
-      html += '<div class="habit-info"><div class="habit-name">'+escapeHtml(p.name)+(p.id===me.id?" (you)":"")+(p.is_admin?' <span style="font-size:10px;font-weight:700;color:#7A5212;background:var(--amber-soft);padding:2px 6px;border-radius:6px;margin-left:4px;">ADMIN</span>':"")+'</div>';
-      html += '<div class="habit-streak">'+habitsFor(p.id).length+' habit'+(habitsFor(p.id).length===1?"":"s")+' \u00b7 '+weeklyScoreForPerson(p)+'% this week</div></div>';
+      html += '<div class="member-row"><div class="avatar" style="width:44px;height:44px;background:'+p.color+'">'+initials(p.name)+'</div>';
+      html += '<div class="member-info"><div class="member-name">'+escapeHtml(p.name)+(p.id===me.id?" (you)":"")+(p.is_admin?' <span style="font-size:10px;font-weight:700;color:#7A5212;background:var(--amber-soft);padding:2px 6px;border-radius:6px;margin-left:4px;">ADMIN</span>':"")+'</div>';
+      html += '<div class="member-sub">'+habitsFor(p.id).length+' habit'+(habitsFor(p.id).length===1?"":"s")+' \u00b7 '+weeklyScoreForPerson(p)+'% this week</div></div>';
       if(me.is_admin && p.id!==me.id){
         html += '<button class="icon-btn" data-remove-person="'+p.id+'" aria-label="Remove member" style="box-shadow:none;background:var(--red-soft);color:var(--red)"><i class="ti ti-trash" style="font-size:15px"></i></button>';
       }
