@@ -4,15 +4,22 @@ import type { Habit } from "@/lib/types"
 type CustomDurationTrackerProps = {
   habit: Habit
   value: number
-  onChange: (value: number) => void
+  onDraftChange: (value: number) => void
+  onCommit: (value: number) => void
 }
 
-export function CustomDurationTracker({ habit, value, onChange }: CustomDurationTrackerProps) {
+export function CustomDurationTracker({
+  habit,
+  value,
+  onDraftChange,
+  onCommit,
+}: CustomDurationTrackerProps) {
   return (
     <DurationSliderTracker
       habit={habit}
       value={value}
-      onChange={onChange}
+      onDraftChange={onDraftChange}
+      onCommit={onCommit}
       label="Duration"
       presets={[15, 30, 45, 60]}
       step={5}

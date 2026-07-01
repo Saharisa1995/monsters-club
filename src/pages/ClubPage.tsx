@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Lock, LogOut, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { PageContent, PageHeader } from "@/components/layout/PageContent"
 import { RankBadge } from "@/components/monster/RankBadge"
 import { LockedFeature } from "@/components/monster/LockedFeature"
 import { useApp } from "@/context/AppContext"
@@ -43,13 +44,11 @@ export function ClubPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5">
-      <div>
-        <h1 className="font-display text-5xl font-black uppercase">Community</h1>
-        <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-          Join groups, follow challengers
-        </p>
-      </div>
+    <PageContent>
+      <PageHeader
+        title="Community"
+        description="Join groups, follow challengers"
+      />
 
       <div className="flex gap-1 rounded-lg bg-muted p-1">
         {(["groups", "people"] as const).map((t) => (
@@ -74,7 +73,7 @@ export function ClubPage() {
         <div className="flex flex-col gap-3">
           {!isFeatureEnabled("groups") ? (
             <LockedFeature title="Groups" description="Join and create challenge groups">
-              <div className="space-y-3 p-4">
+              <div className="flex flex-col gap-3">
                 {GHOST_GROUPS.map((g) => (
                   <div
                     key={g.name}
@@ -115,43 +114,58 @@ export function ClubPage() {
             )
             const perfect = perfectDays(p, eligibleDays, data.habitsByOwner, data.logsByHabit)
             const rank = getRank(perfect, PERFECT_DAY_RANKS)
+            const isMe = p.id === me.id
 
             return (
               <div
                 key={p.id}
-                className="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5"
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-3.5 transition-all",
+                  isMe
+                    ? "habit-row-checked border-[rgba(255,107,53,0.5)]"
+                    : "border-border bg-card",
+                )}
               >
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                   style={{ background: p.color }}
                 >
                   {p.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold text-foreground">
+                  <div className={cn("truncate text-sm font-semibold", isMe && "text-primary")}>
                     {p.name}
-                    {p.id === me.id && (
+                    {isMe && (
                       <span className="font-mono-label text-[10px] text-muted-foreground"> (you)</span>
                     )}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
                     <span className="font-mono-label text-[10px] text-muted-foreground">
-                      Day {dayIndex}
+                      Day {dayIndex} · {perfect} perfect
                     </span>
-                    <span className="font-mono-label text-[10px] text-primary">{score}pts</span>
-                    <RankBadge {...rank} />
+                    <RankBadge {...rank} className="px-2 py-0 text-[10px]" />
                   </div>
                 </div>
-                {isFeatureEnabled("followUsers") ? null : (
+                <div className="shrink-0 text-right">
+                  <div
+                    className={cn(
+                      "font-display text-2xl font-black",
+                      isMe ? "text-primary" : "text-foreground",
+                    )}
+                  >
+                    {score}
+                  </div>
+                  <div className="font-mono-label text-[10px] text-muted-foreground">pts</div>
+                </div>
+                {!isFeatureEnabled("followUsers") && !isMe && (
                   <button
                     type="button"
                     disabled
                     aria-disabled="true"
                     aria-label="Follow coming soon"
-                    className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-muted px-3 py-1.5 font-mono-label text-[10px] text-muted-foreground"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground"
                   >
-                    <Lock className="h-3 w-3" />
-                    Follow
+                    <Lock className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 )}
                 {me.is_admin && p.id !== me.id && (
@@ -181,6 +195,6 @@ export function ClubPage() {
           </Button>
         </div>
       )}
-    </div>
+    </PageContent>
   )
 }

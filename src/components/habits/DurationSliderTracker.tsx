@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Slider } from "@/components/ui/slider"
 import { Progress } from "@/components/ui/progress"
 import type { Habit } from "@/lib/types"
@@ -8,7 +8,10 @@ import { cn } from "@/lib/utils"
 type DurationSliderTrackerProps = {
   habit: Habit
   value: number
-  onChange: (value: number) => void
+  /** Live UI while dragging — does not persist */
+  onDraftChange: (value: number) => void
+  /** Persist when user releases slider or picks a preset */
+  onCommit: (value: number) => void
   label?: string
   presets?: number[]
   step?: number
@@ -18,25 +21,52 @@ type DurationSliderTrackerProps = {
 export function DurationSliderTracker({
   habit,
   value,
-  onChange,
+  onDraftChange,
+  onCommit,
   label = "Duration",
   presets = [15, 30, 45],
   step = 1,
   className,
 }: DurationSliderTrackerProps) {
   const [minutes, setMinutes] = useState(value)
+  const draggingRef = useRef(false)
+  const minutesRef = useRef(value)
   const target = habit.goal_target
   const max = Math.max(target * 2, target + 30, 60)
   const pct = progressPct(habit, minutes)
 
   useEffect(() => {
-    setMinutes(value)
+    minutesRef.current = minutes
+  }, [minutes])
+
+  useEffect(() => {
+    if (!draggingRef.current) {
+      setMinutes(value)
+      minutesRef.current = value
+    }
   }, [value])
 
-  function commit(next: number) {
+  function setDraft(next: number) {
     const clamped = Math.max(0, Math.min(max, next))
+    draggingRef.current = true
     setMinutes(clamped)
-    onChange(clamped)
+    minutesRef.current = clamped
+    onDraftChange(clamped)
+  }
+
+  function finishDrag() {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    onCommit(minutesRef.current)
+  }
+
+  function pickPreset(m: number) {
+    draggingRef.current = false
+    const clamped = Math.max(0, Math.min(max, m))
+    setMinutes(clamped)
+    minutesRef.current = clamped
+    onDraftChange(clamped)
+    onCommit(clamped)
   }
 
   return (
@@ -61,18 +91,27 @@ export function DurationSliderTracker({
 
       <Progress value={pct} className="h-2 bg-muted" />
 
-      <Slider
-        value={[minutes]}
-        min={0}
-        max={max}
-        step={step}
-        onValueChange={(v) => {
-          const next = Array.isArray(v) ? v[0] : v
-          if (next == null) return
-          commit(Number(next))
+      <div
+        onPointerUp={finishDrag}
+        onPointerCancel={finishDrag}
+        onPointerLeave={(e) => {
+          if (e.buttons !== 0) return
+          finishDrag()
         }}
-        className="py-2 [&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-thumb]]:size-5"
-      />
+      >
+        <Slider
+          value={[minutes]}
+          min={0}
+          max={max}
+          step={step}
+          onValueChange={(v) => {
+            const next = Array.isArray(v) ? v[0] : v
+            if (next == null) return
+            setDraft(Number(next))
+          }}
+          className="py-2 [&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-thumb]]:size-5"
+        />
+      </div>
 
       {presets.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2">
@@ -80,7 +119,7 @@ export function DurationSliderTracker({
             <button
               key={m}
               type="button"
-              onClick={() => commit(m)}
+              onClick={() => pickPreset(m)}
               className={cn(
                 "rounded-full border px-3 py-1.5 font-mono-label text-xs font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 minutes === m

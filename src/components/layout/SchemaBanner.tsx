@@ -19,7 +19,7 @@ export function SchemaBanner({ className = "" }: { className?: string }) {
 export function SchemaGate({ children }: { children: ReactNode }) {
   return (
     <>
-      <SchemaBanner className="mx-5 mt-3" />
+      <SchemaBanner className="mt-3" />
       {children}
     </>
   )

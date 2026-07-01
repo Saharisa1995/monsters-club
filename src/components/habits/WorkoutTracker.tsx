@@ -5,15 +5,22 @@ type WorkoutTrackerProps = {
   habit: Habit
   value: number
   metadata: WorkoutMetadata
-  onChange: (value: number, metadata: WorkoutMetadata) => void
+  onDraftChange: (value: number) => void
+  onCommit: (value: number) => void
 }
 
-export function WorkoutTracker({ habit, value, metadata, onChange }: WorkoutTrackerProps) {
+export function WorkoutTracker({
+  habit,
+  value,
+  onDraftChange,
+  onCommit,
+}: WorkoutTrackerProps) {
   return (
     <DurationSliderTracker
       habit={habit}
       value={value}
-      onChange={(v) => onChange(v, metadata)}
+      onDraftChange={onDraftChange}
+      onCommit={onCommit}
       label="Workout"
       presets={[20, 30, 45, 60]}
       step={5}

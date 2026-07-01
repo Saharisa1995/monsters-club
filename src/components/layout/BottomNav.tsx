@@ -27,7 +27,7 @@ type BottomNavProps = {
 export function BottomNav({ active, onChange }: BottomNavProps) {
   return (
     <nav
-      className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 border-t border-border px-2 py-2 backdrop-blur-md"
+      className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-[480px] border-t border-border px-5 py-2 backdrop-blur-md"
       style={{ background: "rgba(7,8,15,0.95)" }}
     >
       <div className="flex items-center justify-around pb-[env(safe-area-inset-bottom)]">

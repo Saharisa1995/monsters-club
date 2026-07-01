@@ -6,10 +6,11 @@ import { progressPct } from "@/lib/scoring"
 type ReadingTrackerProps = {
   habit: Habit
   value: number
-  onChange: (value: number) => void
+  onDraftChange: (value: number) => void
+  onCommit: (value: number) => void
 }
 
-export function ReadingTracker({ habit, value, onChange }: ReadingTrackerProps) {
+export function ReadingTracker({ habit, value, onDraftChange, onCommit }: ReadingTrackerProps) {
   const isMinutes = habit.goal_unit === "min"
 
   if (isMinutes) {
@@ -17,7 +18,8 @@ export function ReadingTracker({ habit, value, onChange }: ReadingTrackerProps) 
       <DurationSliderTracker
         habit={habit}
         value={value}
-        onChange={onChange}
+        onDraftChange={onDraftChange}
+        onCommit={onCommit}
         label="Reading time"
         presets={[10, 20, 30]}
         step={1}
@@ -29,8 +31,13 @@ export function ReadingTracker({ habit, value, onChange }: ReadingTrackerProps) 
   const pct = progressPct(habit, value)
   const presets = [5, 10, 20]
 
+  function adjust(next: number) {
+    onDraftChange(next)
+    onCommit(next)
+  }
+
   function add(n: number) {
-    onChange(Math.min(target * 2, value + n))
+    adjust(Math.min(target * 2, value + n))
   }
 
   return (
@@ -43,7 +50,7 @@ export function ReadingTracker({ habit, value, onChange }: ReadingTrackerProps) 
           type="button"
           variant="outline"
           className="h-12 w-12 rounded-full border-border bg-secondary/50 text-xl font-bold"
-          onClick={() => onChange(Math.max(0, value - 1))}
+          onClick={() => adjust(Math.max(0, value - 1))}
           aria-label="Decrease"
         >
           −

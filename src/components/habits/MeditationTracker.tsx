@@ -4,15 +4,17 @@ import type { Habit } from "@/lib/types"
 type MeditationTrackerProps = {
   habit: Habit
   value: number
-  onChange: (value: number) => void
+  onDraftChange: (value: number) => void
+  onCommit: (value: number) => void
 }
 
-export function MeditationTracker({ habit, value, onChange }: MeditationTrackerProps) {
+export function MeditationTracker({ habit, value, onDraftChange, onCommit }: MeditationTrackerProps) {
   return (
     <DurationSliderTracker
       habit={habit}
       value={value}
-      onChange={onChange}
+      onDraftChange={onDraftChange}
+      onCommit={onCommit}
       label="Meditation"
       presets={[5, 10, 15]}
       step={1}

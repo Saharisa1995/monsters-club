@@ -14,13 +14,11 @@ import {
   Wind,
   type LucideIcon,
 } from "lucide-react"
-import { toast } from "sonner"
 import { HabitCard } from "./HabitCard"
 import { displayHabitName } from "@/lib/habitTemplates"
-import { deleteHabitLog, upsertHabitLog } from "@/lib/api"
 import type { Habit, HabitLog } from "@/lib/types"
-import { isLogComplete, logsForHabit, progressPct } from "@/lib/scoring"
-import { useApp } from "@/context/AppContext"
+import { logsForHabit, progressPct } from "@/lib/scoring"
+import { useHabitLogEditor } from "@/hooks/useHabitLogEditor"
 import { cn } from "@/lib/utils"
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -49,11 +47,11 @@ export function GoalHabitCard({
   logsByHabit,
   onManage,
 }: GoalHabitCardProps) {
-  const { me, refresh } = useApp()
   const [expanded, setExpanded] = useState(false)
   const log = logsForHabit(logsByHabit, habit.id)[logDate]
-  const completed = isLogComplete(habit, log)
-  const value = log?.value ?? 0
+  const editor = useHabitLogEditor(habit, logDate, log)
+  const completed = editor.completed
+  const value = editor.value
   const pct = progressPct(habit, value)
   const Icon = ICON_MAP[habit.icon] ?? Target
   const name = displayHabitName(habit)
@@ -65,23 +63,9 @@ export function GoalHabitCard({
       : "Tap to mark done"
     : `${value}/${habit.goal_target} ${habit.goal_unit}`
 
-  async function toggleBinary() {
-    if (!me) return
-    try {
-      if (completed) {
-        await deleteHabitLog(habit.id, logDate)
-      } else {
-        await upsertHabitLog(habit, me.id, logDate, 1, true, {})
-      }
-      await refresh()
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't save")
-    }
-  }
-
   function handleRowClick() {
     if (isBinary) {
-      void toggleBinary()
+      void editor.toggleBinary(!completed)
       return
     }
     setExpanded((e) => !e)

@@ -11,7 +11,7 @@ import type { Session } from "@supabase/supabase-js"
 import { toast } from "sonner"
 import { fetchAllData, type AppData } from "@/lib/api"
 import { supabase } from "@/lib/supabase"
-import type { Profile, TabId } from "@/lib/types"
+import type { HabitLog, Profile, TabId } from "@/lib/types"
 
 type AppContextValue = {
   session: Session | null
@@ -23,6 +23,8 @@ type AppContextValue = {
   selectedDay: string
   setSelectedDay: (iso: string) => void
   refresh: () => Promise<void>
+  applyHabitLog: (log: HabitLog) => void
+  clearHabitLog: (habitId: string, logDate: string) => void
   signOut: () => Promise<void>
 }
 
@@ -48,6 +50,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const next = await fetchAllData(session.user.id)
     setData(next)
   }, [session?.user.id])
+
+  const applyHabitLog = useCallback((log: HabitLog) => {
+    setData((prev) => {
+      if (!prev) return prev
+      const logsByHabit = { ...prev.logsByHabit }
+      const byDate = { ...(logsByHabit[log.habit_id] ?? {}) }
+      byDate[log.log_date] = log
+      logsByHabit[log.habit_id] = byDate
+      return { ...prev, logsByHabit }
+    })
+  }, [])
+
+  const clearHabitLog = useCallback((habitId: string, logDate: string) => {
+    setData((prev) => {
+      if (!prev) return prev
+      const logsByHabit = { ...prev.logsByHabit }
+      const byDate = { ...(logsByHabit[habitId] ?? {}) }
+      delete byDate[logDate]
+      logsByHabit[habitId] = byDate
+      return { ...prev, logsByHabit }
+    })
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -84,6 +108,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         selectedDay,
         setSelectedDay,
         refresh,
+        applyHabitLog,
+        clearHabitLog,
         signOut,
       }}
     >

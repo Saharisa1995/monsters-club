@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner"
 import { ScoreCard } from "@/components/monster/ScoreCard"
 import { LockedFeature } from "@/components/monster/LockedFeature"
+import { PageContent, PageHeader } from "@/components/layout/PageContent"
 import { useApp } from "@/context/AppContext"
 import { challengeWindow, todayISO } from "@/lib/date"
 import { updateChallengeStart } from "@/lib/api"
@@ -69,16 +70,14 @@ export function ProgressPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5">
-      <div>
-        <h1 className="font-display text-5xl font-black uppercase">Progress</h1>
-        <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-          Day {dayIndex}/{days.length} — {overallPct}% complete · {daysRemaining} left
-        </p>
-        <p className="font-mono-label text-[10px] text-muted-foreground">
-          {start} → {end}
-        </p>
-      </div>
+    <PageContent>
+      <PageHeader
+        title="Progress"
+        description={`Day ${dayIndex}/${days.length} — ${overallPct}% complete · ${daysRemaining} left`}
+      />
+      <p className="-mt-3 font-mono-label text-[10px] text-muted-foreground">
+        {start} → {end}
+      </p>
 
       <ScoreCard
         perfectDays={perfectDaysTotal}
@@ -200,6 +199,6 @@ export function ProgressPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageContent>
   )
 }

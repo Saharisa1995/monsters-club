@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { List, Zap } from "lucide-react"
 import { GoalHabitCard } from "@/components/habits/GoalHabitCard"
 import { HabitLibrarySheet } from "@/components/habits/HabitLibrarySheet"
+import { PageContent } from "@/components/layout/PageContent"
 import { useApp } from "@/context/AppContext"
 import { challengeWindow } from "@/lib/date"
 import { getRank, PERFECT_DAY_RANKS } from "@/lib/ranks"
@@ -49,7 +50,7 @@ export function TodayPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 px-4 py-5">
+      <PageContent>
         <div className="relative overflow-hidden rounded-xl border border-[rgba(255,107,53,0.3)] p-5 monster-hero-gradient">
           <div className="flex items-start justify-between">
             <div>
@@ -198,7 +199,7 @@ export function TodayPage() {
             ))}
           </div>
         </div>
-      </div>
+      </PageContent>
 
       <HabitLibrarySheet
         open={libraryOpen}

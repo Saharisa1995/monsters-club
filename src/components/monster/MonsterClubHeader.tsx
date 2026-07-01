@@ -9,7 +9,11 @@ import {
 import { getRank, scoreRanksForMax } from "@/lib/ranks"
 import { cn } from "@/lib/utils"
 
-export function MonsterClubHeader() {
+type MonsterClubHeaderProps = {
+  className?: string
+}
+
+export function MonsterClubHeader({ className }: MonsterClubHeaderProps) {
   const { me, data } = useApp()
   if (!me || !data) return null
 
@@ -23,7 +27,10 @@ export function MonsterClubHeader() {
 
   return (
     <header
-      className="sticky top-0 z-40 flex items-center justify-between border-b border-border px-4 py-2.5 backdrop-blur-md"
+      className={cn(
+        "sticky top-0 z-40 flex items-center justify-between border-b border-border py-2.5 backdrop-blur-md",
+        className,
+      )}
       style={{ background: "rgba(7,8,15,0.92)" }}
     >
       <div className="flex items-center gap-2.5">

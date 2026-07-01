@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Lock } from "lucide-react"
 import { toast } from "sonner"
 import { RankBadge } from "@/components/monster/RankBadge"
+import { PageContent, PageHeader } from "@/components/layout/PageContent"
 import { useApp } from "@/context/AppContext"
 import { challengeWindow } from "@/lib/date"
 import { isFeatureEnabled } from "@/lib/featureFlags"
@@ -51,13 +52,11 @@ export function LeaderboardPage() {
   const medals = ["🥇", "🥈", "🥉"]
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5">
-      <div>
-        <h1 className="font-display text-5xl font-black uppercase">Leaderboard</h1>
-        <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-          Monster Club global rankings
-        </p>
-      </div>
+    <PageContent>
+      <PageHeader
+        title="Leaderboard"
+        description="Monster Club global rankings"
+      />
 
       <div className="flex gap-1 rounded-lg bg-muted p-1">
         {(["individual", "group"] as const).map((s) => (
@@ -144,6 +143,6 @@ export function LeaderboardPage() {
           })}
         </div>
       )}
-    </div>
+    </PageContent>
   )
 }

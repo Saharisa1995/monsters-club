@@ -1,4 +1,5 @@
 import { Heart, MessageSquare, Zap } from "lucide-react"
+import { PageContent, PageHeader } from "@/components/layout/PageContent"
 import { LockedFeature } from "@/components/monster/LockedFeature"
 import { isFeatureEnabled } from "@/lib/featureFlags"
 
@@ -27,27 +28,25 @@ export function FeedPage() {
   }
 
   return (
-    <div className="flex flex-col gap-5 px-4 py-5">
-      <div>
-        <h1 className="font-display text-5xl font-black uppercase">Feed</h1>
-        <p className="mt-1 font-mono-label text-xs text-muted-foreground">
-          Monster Club community activity
-        </p>
-      </div>
+    <PageContent>
+      <PageHeader
+        title="Feed"
+        description="Monster Club community activity"
+      />
 
       <LockedFeature title="Community Feed" description="Share progress photos and updates">
-        <div className="space-y-4 p-4">
+        <div className="flex flex-col gap-4">
           {MOCK_POSTS.map((post) => (
             <div key={post.user} className="overflow-hidden rounded-xl border border-border bg-card">
               <div className="flex items-center gap-3 p-4 pb-3">
-                <div className="h-10 w-10 rounded-full bg-muted" />
-                <div className="flex-1">
+                <div className="h-10 w-10 shrink-0 rounded-full bg-muted" />
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold">{post.user}</div>
                   <div className="font-mono-label text-[10px] text-muted-foreground">
                     Day {post.day} · {post.time}
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   <span className="font-mono-label text-[10px] font-bold text-primary">
                     {post.tasks}/7
                   </span>
@@ -70,6 +69,6 @@ export function FeedPage() {
           ))}
         </div>
       </LockedFeature>
-    </div>
+    </PageContent>
   )
 }

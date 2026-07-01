@@ -5,15 +5,22 @@ type DeepWorkTrackerProps = {
   habit: Habit
   value: number
   metadata: DeepWorkMetadata
-  onChange: (value: number, metadata: DeepWorkMetadata) => void
+  onDraftChange: (value: number) => void
+  onCommit: (value: number) => void
 }
 
-export function DeepWorkTracker({ habit, value, metadata, onChange }: DeepWorkTrackerProps) {
+export function DeepWorkTracker({
+  habit,
+  value,
+  onDraftChange,
+  onCommit,
+}: DeepWorkTrackerProps) {
   return (
     <DurationSliderTracker
       habit={habit}
       value={value}
-      onChange={(v) => onChange(v, metadata)}
+      onDraftChange={onDraftChange}
+      onCommit={onCommit}
       label="Deep work"
       presets={[30, 60, 90]}
       step={5}

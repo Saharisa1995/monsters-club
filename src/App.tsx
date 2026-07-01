@@ -16,9 +16,9 @@ function MainApp() {
 
   return (
     <MobileScreen className="px-0 pb-0 pt-0">
-      <div className="app-shell flex-1">
-        <MonsterClubHeader />
-        <main className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="app-shell flex w-full min-w-0 flex-1 flex-col">
+        <MonsterClubHeader className="px-5" />
+        <main className="flex-1 overflow-y-auto px-5 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <SchemaGate>
             {tab === "today" && <TodayPage />}
             {tab === "progress" && <ProgressPage />}
@@ -27,8 +27,8 @@ function MainApp() {
             {tab === "leaderboard" && <LeaderboardPage />}
           </SchemaGate>
         </main>
-        <BottomNav active={tab} onChange={setTab} />
       </div>
+      <BottomNav active={tab} onChange={setTab} />
     </MobileScreen>
   )
 }
