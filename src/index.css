@@ -1,0 +1,99 @@
+@import "@fontsource/nunito/400.css";
+@import "@fontsource/nunito/500.css";
+@import "@fontsource/nunito/600.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: oklch(0.97 0.012 295);
+  --color-foreground: oklch(0.22 0.02 285);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.22 0.02 285);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.22 0.02 285);
+  --color-primary: oklch(0.62 0.19 295);
+  --color-primary-foreground: oklch(1 0 0);
+  --color-secondary: oklch(0.95 0.02 295);
+  --color-secondary-foreground: oklch(0.35 0.04 285);
+  --color-muted: oklch(0.94 0.015 295);
+  --color-muted-foreground: oklch(0.52 0.02 285);
+  --color-accent: oklch(0.93 0.04 295);
+  --color-accent-foreground: oklch(0.35 0.06 295);
+  --color-destructive: oklch(0.58 0.22 25);
+  --color-border: oklch(0.9 0.02 295);
+  --color-input: oklch(0.92 0.02 295);
+  --color-ring: oklch(0.62 0.19 295);
+  --color-success: oklch(0.72 0.17 155);
+
+  --color-habit-water: oklch(0.88 0.08 220);
+  --color-habit-workout: oklch(0.88 0.1 25);
+  --color-habit-reading: oklch(0.9 0.08 85);
+  --color-habit-journal: oklch(0.9 0.06 295);
+  --color-habit-deep-work: oklch(0.88 0.1 265);
+  --color-habit-custom: oklch(0.9 0.06 155);
+
+  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-md: calc(var(--radius) * 0.875);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 2.5);
+}
+
+:root {
+  --radius: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+@keyframes cup-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.cup-pop {
+  animation: cup-pop 0.25s ease;
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0.85); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.check-pop {
+  animation: check-pop 0.2s ease;
+}

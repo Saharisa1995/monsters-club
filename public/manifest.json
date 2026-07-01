@@ -1,12 +1,12 @@
 {
   "name": "Monsters' Club",
   "short_name": "Monsters' Club",
-  "description": "Track daily habits and compete on the leaderboard with your group.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "description": "75-day group habit challenge with deep tracking.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F5F4F1",
-  "theme_color": "#1C1C1E",
+  "background_color": "#F3F0FA",
+  "theme_color": "#8B6CF6",
   "orientation": "portrait",
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
