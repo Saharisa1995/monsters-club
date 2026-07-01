@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -6,10 +7,11 @@ import { AuthCard, MobileScreen } from "@/components/layout/MobileScreen"
 import { SegmentedControl } from "@/components/layout/SegmentedControl"
 import { supabase, supabaseConfigError } from "@/lib/supabase"
 import { createProfile } from "@/lib/api"
+import { CHALLENGE_HABIT_COUNT } from "@/lib/scoring"
 import { toast } from "sonner"
 
 const inputClass =
-  "mt-1.5 h-12 rounded-2xl border-border/80 bg-background px-4 text-base"
+  "mt-1.5 h-12 rounded-lg border-border bg-input-background px-4 text-base"
 
 type AuthPageProps = {
   onAuthed: () => void
@@ -54,18 +56,21 @@ export function AuthPage({ onAuthed }: AuthPageProps) {
   return (
     <MobileScreen className="justify-center">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex h-[72px] w-[72px] items-center justify-center rounded-[22px] bg-primary text-3xl shadow-md shadow-primary/25">
-          🐾
+        <div className="mx-auto mb-4 flex h-[72px] w-[72px] items-center justify-center rounded-xl bg-primary shadow-[0_0_24px_rgba(255,107,53,0.35)]">
+          <Flame className="h-9 w-9 text-white" aria-hidden="true" />
         </div>
-        <h1 className="text-[28px] font-extrabold tracking-tight">Monsters&apos; Club</h1>
-        <p className="mt-1.5 text-[15px] text-muted-foreground">
-          75-day group habit challenge
+        <h1 className="font-display text-[32px] font-black tracking-wide uppercase">
+          Monster Club
+        </h1>
+        <p className="mt-1.5 font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
+          Discipline Today · Freedom Tomorrow
         </p>
+        <p className="mt-2 text-sm text-muted-foreground">75-day group habit challenge</p>
       </div>
 
-      <AuthCard className="space-y-5">
+      <AuthCard className="space-y-5 border-border bg-card">
         {supabaseConfigError && (
-          <p className="rounded-2xl bg-destructive/10 px-3 py-2.5 text-center text-xs font-medium leading-relaxed text-destructive">
+          <p className="rounded-lg bg-destructive/10 px-3 py-2.5 text-center text-xs font-medium leading-relaxed text-destructive">
             {supabaseConfigError}
           </p>
         )}
@@ -80,7 +85,7 @@ export function AuthPage({ onAuthed }: AuthPageProps) {
 
         <div className="space-y-4">
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            <Label className="font-mono-label text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
               Email
             </Label>
             <Input
@@ -94,7 +99,7 @@ export function AuthPage({ onAuthed }: AuthPageProps) {
             />
           </div>
           <div>
-            <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+            <Label className="font-mono-label text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
               Password
             </Label>
             <Input
@@ -111,7 +116,7 @@ export function AuthPage({ onAuthed }: AuthPageProps) {
 
         <Button
           type="button"
-          className="h-12 w-full rounded-2xl text-base font-bold"
+          className="h-12 w-full rounded-lg font-display text-lg font-black uppercase"
           disabled={loading}
           onClick={submit}
         >
@@ -126,7 +131,7 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState("")
   const [colorIdx, setColorIdx] = useState(0)
   const [loading, setLoading] = useState(false)
-  const colors = ["#8B6CF6", "#3FB97B", "#E8A23B", "#E5594B", "#9678EB", "#EC6FA0"]
+  const colors = ["#ff6b35", "#818cf8", "#22c55e", "#f59e0b", "#e53935", "#c084fc"]
 
   async function submit() {
     if (!name.trim()) {
@@ -140,7 +145,7 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
       const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true })
       const isFirst = (count ?? 0) === 0
       await createProfile(user.id, name.trim(), colors[colorIdx], isFirst)
-      toast.success(isFirst ? "You're the founding admin!" : "Welcome!")
+      toast.success(isFirst ? "You're the founding admin!" : "Welcome to Monster Club!")
       onDone()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create profile")
@@ -152,15 +157,17 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
   return (
     <MobileScreen className="justify-center">
       <div className="mb-6 text-center">
-        <h1 className="text-[28px] font-extrabold tracking-tight">Almost there</h1>
-        <p className="mt-1.5 text-[15px] text-muted-foreground">
-          Your profile + 5 daily habits will be set up
+        <h1 className="font-display text-[28px] font-black tracking-wide uppercase">
+          Join the Club
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Your profile + {CHALLENGE_HABIT_COUNT} daily habits will be set up
         </p>
       </div>
 
-      <AuthCard className="space-y-5">
+      <AuthCard className="space-y-5 border-border bg-card">
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Label className="font-mono-label text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
             Your name
           </Label>
           <Input
@@ -174,7 +181,7 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
         </div>
 
         <div>
-          <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+          <Label className="font-mono-label text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
             Pick a color
           </Label>
           <div className="mt-3 flex flex-wrap justify-center gap-3">
@@ -184,8 +191,8 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
                 type="button"
                 onClick={() => setColorIdx(i)}
                 aria-label={`Color ${i + 1}`}
-                className={`h-11 w-11 rounded-full transition-transform ${
-                  colorIdx === i ? "scale-110 ring-2 ring-primary ring-offset-2" : ""
+                className={`h-11 w-11 rounded-full transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                  colorIdx === i ? "scale-110 ring-2 ring-primary ring-offset-2 ring-offset-card" : ""
                 }`}
                 style={{ background: c }}
               />
@@ -193,17 +200,17 @@ export function OnboardingPage({ onDone }: { onDone: () => void }) {
           </div>
         </div>
 
-        <p className="rounded-2xl bg-muted/80 px-3 py-2.5 text-center text-xs leading-relaxed text-muted-foreground">
-          Workout · Water · Reading · Journal · Deep work — added automatically
+        <p className="rounded-lg bg-muted/80 px-3 py-2.5 text-center font-mono-label text-[10px] leading-relaxed text-muted-foreground">
+          Read · Journal · Deep work · Water · Meditation · Workout · Cold shower — 1 pt each at full goal
         </p>
 
         <Button
           type="button"
-          className="h-12 w-full rounded-2xl text-base font-bold"
+          className="h-12 w-full rounded-lg font-display text-lg font-black uppercase"
           disabled={loading}
           onClick={submit}
         >
-          {loading ? "Setting up…" : "Continue"}
+          {loading ? "Setting up…" : "Enter Monster Club"}
         </Button>
       </AuthCard>
     </MobileScreen>

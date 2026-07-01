@@ -1,97 +1,149 @@
 import { useState } from "react"
-import { Crown } from "lucide-react"
+import { Lock } from "lucide-react"
+import { toast } from "sonner"
+import { RankBadge } from "@/components/monster/RankBadge"
 import { useApp } from "@/context/AppContext"
+import { challengeWindow } from "@/lib/date"
+import { isFeatureEnabled } from "@/lib/featureFlags"
+import { getRank, scoreRanksForMax } from "@/lib/ranks"
 import {
-  challengeScoreForPerson,
-  completionPctForPerson,
-  habitsForPerson,
-  isLogComplete,
-  logsForHabit,
+  challengePointsForPerson,
+  dailyPoints,
+  isScoringEligible,
+  maxTotalPoints,
+  perfectDays,
 } from "@/lib/scoring"
 import { todayISO } from "@/lib/date"
-import { SegmentedControl } from "@/components/layout/SegmentedControl"
 import { cn } from "@/lib/utils"
 
-type LbMode = "daily" | "challenge"
+type Scope = "individual" | "group"
 
 export function LeaderboardPage() {
   const { me, data } = useApp()
-  const [mode, setMode] = useState<LbMode>("daily")
+  const [scope, setScope] = useState<Scope>("individual")
 
   if (!me || !data) return null
 
   const today = todayISO()
+  const { days, dayIndex } = challengeWindow(data.challenge)
+  const eligibleDays = days.slice(0, dayIndex)
 
   const ranked = data.people
     .map((p) => {
-      if (mode === "daily") {
-        const habits = habitsForPerson(data.habitsByOwner, p.id)
-        const checks = habits.filter((h) =>
-          isLogComplete(h, logsForHabit(data.logsByHabit, h.id)[today]),
-        ).length
-        return {
-          p,
-          score: completionPctForPerson(p, today, data.habitsByOwner, data.logsByHabit),
-          checks,
-        }
-      }
-      return {
+      const eligible = isScoringEligible(data.habitsByOwner, p.id)
+      const maxScore = maxTotalPoints(undefined, days.length)
+      const totalScore = challengePointsForPerson(
         p,
-        score: challengeScoreForPerson(p, data.challenge, data.habitsByOwner, data.logsByHabit),
-        checks: 0,
-      }
+        data.challenge,
+        data.habitsByOwner,
+        data.logsByHabit,
+      )
+      const perfect = perfectDays(p, eligibleDays, data.habitsByOwner, data.logsByHabit)
+      const todayPts = dailyPoints(p, today, data.habitsByOwner, data.logsByHabit)
+      const scoreRank = getRank(totalScore, scoreRanksForMax(maxScore))
+      return { p, totalScore, maxScore, perfect, todayPts, scoreRank, eligible }
     })
-    .sort((a, b) => (b.score !== a.score ? b.score - a.score : b.checks - a.checks))
+    .sort((a, b) => {
+      if (a.eligible !== b.eligible) return a.eligible ? -1 : 1
+      return b.totalScore - a.totalScore
+    })
+
+  const medals = ["🥇", "🥈", "🥉"]
 
   return (
-    <div className="px-5 pt-[calc(12px+env(safe-area-inset-top))]">
-      <h1 className="text-3xl font-extrabold">Leaderboard</h1>
-      <SegmentedControl
-        value={mode}
-        onChange={setMode}
-        className="mt-4"
-        options={[
-          { value: "daily", label: "Daily" },
-          { value: "challenge", label: "75-day" },
-        ]}
-      />
-      <p className="mt-3 text-xs text-muted-foreground">
-        {mode === "daily" ? "Today's completion rate" : "Fixed group challenge window"}
-      </p>
-      <div className="mt-4 space-y-2">
-        {ranked.map((r, i) => (
-          <div
-            key={r.p.id}
+    <div className="flex flex-col gap-5 px-4 py-5">
+      <div>
+        <h1 className="font-display text-5xl font-black uppercase">Leaderboard</h1>
+        <p className="mt-1 font-mono-label text-xs text-muted-foreground">
+          Monster Club global rankings
+        </p>
+      </div>
+
+      <div className="flex gap-1 rounded-lg bg-muted p-1">
+        {(["individual", "group"] as const).map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => {
+              if (s === "group" && !isFeatureEnabled("groupLeaderboard")) {
+                toast.info("Group rankings coming soon")
+                return
+              }
+              setScope(s)
+            }}
             className={cn(
-              "flex items-center gap-3 rounded-2xl bg-card p-3 shadow-sm",
-              r.p.id === me.id && "ring-2 ring-primary/30",
+              "flex flex-1 items-center justify-center gap-1 rounded-md py-2 text-sm font-semibold capitalize transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+              scope === s ? "bg-card text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <span className="flex w-6 justify-center text-sm font-bold text-muted-foreground">
-              {i === 0 ? <Crown className="h-5 w-5 text-amber-500" /> : i + 1}
-            </span>
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ background: r.p.color }}
-            >
-              {r.p.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-bold">
-                {r.p.name}
-                {r.p.id === me.id && " (you)"}
-              </p>
-              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${r.score}%`, background: r.p.color }}
-                />
-              </div>
-            </div>
-            <span className="text-lg font-extrabold">{r.score}%</span>
-          </div>
+            {s}
+            {s === "group" && !isFeatureEnabled("groupLeaderboard") && (
+              <Lock className="h-3 w-3" aria-hidden="true" />
+            )}
+          </button>
         ))}
       </div>
+
+      {scope === "individual" && (
+        <div className="flex flex-col gap-2">
+          {ranked.map((r, i) => {
+            const isMe = r.p.id === me.id
+            return (
+              <div
+                key={r.p.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-3.5 transition-all",
+                  isMe
+                    ? "habit-row-checked border-[rgba(255,107,53,0.5)]"
+                    : "border-border bg-card",
+                )}
+              >
+                <div className="w-7 shrink-0 text-center">
+                  {i < 3 ? (
+                    <span className="text-lg">{medals[i]}</span>
+                  ) : (
+                    <span className="font-mono-label text-xs text-muted-foreground">#{i + 1}</span>
+                  )}
+                </div>
+                <div
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ background: r.p.color }}
+                >
+                  {r.p.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className={cn("truncate text-sm font-semibold", isMe && "text-primary")}>
+                    {r.p.name}
+                    {isMe && (
+                      <span className="font-mono-label text-[10px] text-muted-foreground"> (you)</span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                    <span className="font-mono-label text-[10px] text-muted-foreground">
+                      Day {dayIndex} · {r.perfect} perfect · {r.todayPts} today
+                      {!r.eligible && " · incomplete roster"}
+                    </span>
+                    <RankBadge {...r.scoreRank} />
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div
+                    className={cn(
+                      "font-display text-2xl font-black",
+                      isMe ? "text-primary" : "text-foreground",
+                    )}
+                  >
+                    {r.totalScore}
+                  </div>
+                  <div className="font-mono-label text-[10px] text-muted-foreground">
+                    /{r.maxScore}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

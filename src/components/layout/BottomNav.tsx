@@ -1,12 +1,22 @@
-import { CheckSquare, Grid3x3, Trophy, Users } from "lucide-react"
+import {
+  BarChart3,
+  Home,
+  Image,
+  Trophy,
+  Users,
+  type LucideIcon,
+} from "lucide-react"
+import { LockedNavItem } from "@/components/monster/LockedNavItem"
+import { isFeatureEnabled } from "@/lib/featureFlags"
 import type { TabId } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-const TABS: { id: TabId; label: string; icon: typeof CheckSquare }[] = [
-  { id: "today", label: "Today", icon: CheckSquare },
-  { id: "challenge", label: "Challenge", icon: Grid3x3 },
-  { id: "leaderboard", label: "Leaderboard", icon: Trophy },
-  { id: "people", label: "People", icon: Users },
+const TABS: { id: TabId; label: string; icon: LucideIcon; locked?: boolean }[] = [
+  { id: "today", label: "Today", icon: Home },
+  { id: "progress", label: "Progress", icon: BarChart3 },
+  { id: "club", label: "Club", icon: Users },
+  { id: "feed", label: "Feed", icon: Image, locked: true },
+  { id: "leaderboard", label: "Ranks", icon: Trophy },
 ]
 
 type BottomNavProps = {
@@ -16,22 +26,42 @@ type BottomNavProps = {
 
 export function BottomNav({ active, onChange }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-[480px] border-t border-border bg-background/95 px-2 pb-[calc(8px+env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl">
-      <div className="flex">
-        {TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onChange(id)}
-            className={cn(
-              "flex flex-1 flex-col items-center gap-0.5 py-1 text-[10.5px] font-semibold transition-colors",
-              active === id ? "text-primary" : "text-muted-foreground",
-            )}
-          >
-            <Icon className="h-5 w-5" strokeWidth={active === id ? 2.5 : 2} />
-            {label}
-          </button>
-        ))}
+    <nav
+      className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2 border-t border-border px-2 py-2 backdrop-blur-md"
+      style={{ background: "rgba(7,8,15,0.95)" }}
+    >
+      <div className="flex items-center justify-around pb-[env(safe-area-inset-bottom)]">
+        {TABS.map(({ id, label, icon: Icon, locked }) => {
+          const isLocked = locked && !isFeatureEnabled("feed") && id === "feed"
+          if (isLocked) {
+            return (
+              <LockedNavItem
+                key={id}
+                icon={Icon}
+                label={label}
+                active={active === id}
+                onClick={() => onChange(id)}
+              />
+            )
+          }
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange(id)}
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                active === id ? "text-primary" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className={cn("h-5 w-5", active === id && "scale-110")} />
+              <span className="font-mono-label text-[10px] font-medium">{label}</span>
+              {active === id && (
+                <div className="h-1 w-1 rounded-full bg-primary" aria-hidden="true" />
+              )}
+            </button>
+          )
+        })}
       </div>
     </nav>
   )

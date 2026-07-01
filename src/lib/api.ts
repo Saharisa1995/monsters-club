@@ -1,7 +1,8 @@
 import type { PostgrestError } from "@supabase/supabase-js"
 import { supabase } from "./supabase"
 import { PRESET_HABITS } from "./types"
-import type { ChallengeSettings, Habit, HabitLog, JournalEntry, Profile } from "./types"
+import type { ChallengeSettings, GoalMode, Habit, HabitLog, HabitType, JournalEntry, Profile } from "./types"
+import { defaultOnboardingHabits } from "./habitTemplates"
 
 export type AppData = {
   people: Profile[]
@@ -130,7 +131,7 @@ export async function createProfile(
   })
   if (error) throw error
 
-  const v2Rows = PRESET_HABITS.map((h, i) => ({
+  const v2Rows = defaultOnboardingHabits().map((h, i) => ({
     owner_id: userId,
     ...h,
     sort_order: i,
@@ -140,7 +141,7 @@ export async function createProfile(
 
   if (!isMissingColumn(v2.error)) throw v2.error
 
-  const v1Rows = PRESET_HABITS.map((h) => ({
+  const v1Rows = defaultOnboardingHabits().map((h) => ({
     owner_id: userId,
     name: h.name,
     icon: h.icon,
@@ -253,6 +254,69 @@ export async function upsertJournalEntry(
     }
     throw error
   }
+}
+
+export async function createHabit(
+  userId: string,
+  payload: {
+    name: string
+    icon?: string
+    color_idx?: number
+    habit_type?: HabitType
+    goal_mode?: GoalMode
+    goal_target?: number
+    goal_unit?: string
+    sort_order?: number
+  },
+): Promise<Habit> {
+  const row = {
+    owner_id: userId,
+    name: payload.name.trim(),
+    icon: payload.icon ?? "target",
+    color_idx: payload.color_idx ?? 0,
+    freq: "daily",
+    habit_type: payload.habit_type ?? "custom",
+    goal_mode: payload.goal_mode ?? "binary",
+    goal_target: payload.goal_target ?? 1,
+    goal_unit: payload.goal_unit ?? "pt",
+    sort_order: payload.sort_order ?? 99,
+    is_preset: false,
+  }
+  const { data, error } = await supabase.from("habits").insert(row).select().single()
+  if (error) {
+    if (isMissingColumn(error)) {
+      const v1 = await supabase
+        .from("habits")
+        .insert({
+          owner_id: userId,
+          name: payload.name,
+          icon: payload.icon ?? "target",
+          color_idx: 0,
+          freq: "daily",
+        })
+        .select()
+        .single()
+      if (v1.error) throw v1.error
+      return normalizeHabit(v1.data)
+    }
+    throw error
+  }
+  return normalizeHabit(data)
+}
+
+export async function updateHabit(
+  habitId: string,
+  updates: Partial<
+    Pick<Habit, "name" | "icon" | "sort_order" | "goal_mode" | "goal_target" | "goal_unit">
+  >,
+): Promise<void> {
+  const { error } = await supabase.from("habits").update(updates).eq("id", habitId)
+  if (error) throw error
+}
+
+export async function deleteHabit(habitId: string): Promise<void> {
+  const { error } = await supabase.from("habits").delete().eq("id", habitId)
+  if (error) throw error
 }
 
 export async function updateChallengeStart(

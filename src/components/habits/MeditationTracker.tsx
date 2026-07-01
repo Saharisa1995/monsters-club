@@ -1,21 +1,21 @@
 import { DurationSliderTracker } from "./DurationSliderTracker"
 import type { Habit } from "@/lib/types"
 
-type CustomDurationTrackerProps = {
+type MeditationTrackerProps = {
   habit: Habit
   value: number
   onChange: (value: number) => void
 }
 
-export function CustomDurationTracker({ habit, value, onChange }: CustomDurationTrackerProps) {
+export function MeditationTracker({ habit, value, onChange }: MeditationTrackerProps) {
   return (
     <DurationSliderTracker
       habit={habit}
       value={value}
       onChange={onChange}
-      label="Duration"
-      presets={[15, 30, 45, 60]}
-      step={5}
+      label="Meditation"
+      presets={[5, 10, 15]}
+      step={1}
     />
   )
 }

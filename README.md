@@ -42,13 +42,22 @@ npm install
 npm run dev
 ```
 
-### 4. Deploy (Vercel / GitHub Pages / Netlify)
+### 4. Deploy (Vercel)
+
+**Full step-by-step guide:** see [`DEPLOY.md`](DEPLOY.md).
+
+Quick summary:
+
+1. Push this repo to GitHub
+2. Create a Supabase project and run `schema.sql` + `schema-migration-v2.sql`
+3. Import the repo at [vercel.com/new](https://vercel.com/new)
+4. Set env vars: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, optional `VITE_CHALLENGE_DAYS`
+5. Deploy — Vercel uses `vercel.json` (Vite → `dist/`, SPA rewrites)
+6. Add your Vercel URL in Supabase → Authentication → URL Configuration
 
 ```bash
-npm run build
+npm run build   # verify locally before pushing
 ```
-
-Deploy the `dist/` folder. Set the same env vars in your host dashboard.
 
 | Vercel | Framework: Vite · Build: `npm run build` · Output: `dist` |
 
