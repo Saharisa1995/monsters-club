@@ -12,12 +12,12 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
-    --bg:#F5F4F1;
+    --bg:#FFFFFF;
     --card:#FFFFFF;
     --ink:#1C1C1E;
     --ink-soft:#6B6B6F;
     --ink-faint:#A8A8AC;
-    --line:#ECEBE7;
+    --line:#F0EFEC;
     --green:#3FB97B;
     --green-soft:#E6F7EE;
     --red:#E5594B;
@@ -27,12 +27,23 @@
     --blue:#4C8DF6;
     --blue-soft:#EAF1FE;
     --purple:#9678EB;
+    --pink:#F0507A;
+    --pink-soft:#FDE9EE;
     --radius-lg:20px;
-    --radius-md:14px;
+    --radius-md:16px;
     --radius-sm:10px;
     --shadow:0 1px 2px rgba(28,28,30,0.04), 0 6px 16px rgba(28,28,30,0.05);
     font-size:16px;
   }
+  /* Habit row gradient palette, matched to reference app */
+  .hue-1{ background:linear-gradient(135deg,#FF8A80,#FF6F61); } /* Deep Work red */
+  .hue-2{ background:linear-gradient(135deg,#C9A6F5,#A98CE8); } /* Read purple */
+  .hue-3{ background:linear-gradient(135deg,#5FD3E0,#38B6D9); } /* Water teal */
+  .hue-4{ background:linear-gradient(135deg,#7C93F5,#4C6EF0); } /* Workout blue */
+  .hue-5{ background:linear-gradient(135deg,#A9C0D6,#8EA9C4); } /* Meditation slate */
+  .hue-6{ background:linear-gradient(135deg,#FFC168,#FFA53D); } /* Review orange */
+  .hue-7{ background:linear-gradient(135deg,#FF9DBB,#F0507A); } /* Pink */
+  .hue-8{ background:linear-gradient(135deg,#8CE0C3,#4FC79B); } /* Mint */
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
@@ -82,10 +93,10 @@
   .auth-error.show{display:block;}
   .login-loading{text-align:center; padding:60px 0; color:var(--ink-soft); font-size:14px;}
 
-  .header{padding:18px 20px 8px; position:sticky; top:0; background:var(--bg); z-index:30; padding-top:calc(18px + env(safe-area-inset-top));}
-  .header-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; gap:10px;}
-  .greeting{font-size:26px; font-weight:700; letter-spacing:-0.4px;}
-  .date-sub{font-size:14px; color:var(--ink-soft); margin-top:2px;}
+  .header{padding:14px 20px 8px; position:sticky; top:0; background:var(--bg); z-index:30; padding-top:calc(14px + env(safe-area-inset-top));}
+  .header-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px;}
+  .greeting{font-size:20px; font-weight:800; letter-spacing:-0.3px; flex:1; text-align:center;}
+  .date-sub{font-size:12.5px; color:var(--ink-soft); margin-top:2px; text-align:center;}
   .header-actions{display:flex; gap:8px; flex-shrink:0;}
   .icon-btn{
     width:38px;height:38px;border-radius:50%;background:var(--card);border:none;
@@ -105,43 +116,115 @@
   .me-strip-role{font-size:11.5px;color:var(--ink-soft);}
   .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex-shrink:0;}
 
-  .summary-card{margin:4px 20px 18px;background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:18px 20px;display:flex;align-items:center;gap:18px;}
-  .ring-wrap{position:relative; width:74px; height:74px; flex-shrink:0;}
+  .summary-card{margin:2px 20px 16px;background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px 18px;display:flex;align-items:center;gap:16px;}
+  .ring-wrap{position:relative; width:60px; height:60px; flex-shrink:0;}
   .ring-wrap svg{transform:rotate(-90deg);}
-  .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;}
+  .ring-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;}
   .summary-text{flex:1;}
-  .summary-title{font-size:15px;font-weight:600;}
-  .summary-sub{font-size:13px;color:var(--ink-soft);margin-top:3px;}
-  .summary-stats{display:flex; gap:18px; margin-top:10px;}
+  .summary-title{font-size:14px;font-weight:700;}
+  .summary-sub{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+  .summary-stats{display:flex; gap:16px; margin-top:8px;}
   .stat{display:flex;flex-direction:column;}
-  .stat-num{font-size:18px;font-weight:700;}
-  .stat-label{font-size:11px;color:var(--ink-faint);margin-top:1px;}
+  .stat-num{font-size:16px;font-weight:700;}
+  .stat-label{font-size:10.5px;color:var(--ink-faint);margin-top:1px;}
 
   .section-row{display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin:6px 0 10px;}
   .section-title{font-size:18px;font-weight:700;letter-spacing:-0.2px;}
-  .section-action{font-size:13px;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;}
+  .section-action{font-size:13px;font-weight:600;color:var(--pink);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;}
 
-  .habit-list{display:flex;flex-direction:column;gap:10px;padding:0 20px;}
-  .habit-card{background:var(--card);border-radius:var(--radius-md);box-shadow:var(--shadow);padding:14px 14px;display:flex;align-items:center;gap:12px;}
-  .habit-color-dot{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:19px;}
-  .habit-info{flex:1; min-width:0;}
-  .habit-name{font-size:15px;font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .habit-streak{font-size:12px; color:var(--ink-soft); margin-top:2px; display:flex; align-items:center; gap:4px;}
-  .week-dots{display:flex;gap:5px;margin-top:8px;}
-  .day-dot{width:22px;height:22px;border-radius:7px;background:var(--line);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--ink-faint);cursor:pointer;border:none;flex-shrink:0;transition:transform .1s ease;}
-  .day-dot:active{transform:scale(0.88);}
-  .day-dot.done{color:#fff;}
-  .day-dot.today{box-shadow:0 0 0 2px var(--ink) inset;}
-  .check-btn{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:none;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:transparent;transition:all .15s ease;}
-  .check-btn.done{background:var(--green);border-color:var(--green);color:#fff;}
+  /* ---- Date strip (Mo Tu We Th Fr Sa Su, circular day markers) ---- */
+  .date-strip{display:flex;justify-content:space-between;padding:6px 18px 16px;}
+  .date-col{display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;}
+  .date-col-label{font-size:12px;color:var(--ink-faint);font-weight:600;}
+  .date-col.selected .date-col-label{color:var(--ink);}
+  .date-circle{
+    width:34px;height:34px;border-radius:50%;
+    border:2px solid var(--pink-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
+    cursor:pointer; background:#fff;
+    transition:all .15s ease;
+  }
+  .date-circle.has-progress{border-color:var(--pink);}
+  .date-col.selected .date-circle{border-color:var(--ink); border-width:2.5px; color:var(--ink); font-weight:700;}
+  .date-col.future .date-circle{color:var(--ink-faint); border-color:var(--line);}
+
+  /* ---- Filter pill + mood icon row above date strip ---- */
+  .filter-row{display:flex; align-items:center; justify-content:space-between; padding:0 20px 10px;}
+  .filter-pill{
+    background:var(--pink); color:#fff; border:none; border-radius:20px;
+    padding:8px 14px; font-size:14px; font-weight:700;
+    display:flex; align-items:center; gap:4px; cursor:pointer;
+  }
+  .filter-pill .ti{font-size:13px;}
+  .mood-badge{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--amber-soft);
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px; cursor:pointer; position:relative;
+  }
+
+  /* ---- Habit rows: bold gradient cards ---- */
+  .habit-list{display:flex;flex-direction:column;gap:12px;padding:0 20px;}
+  .habit-card{
+    position:relative;
+    border-radius:18px;
+    padding:16px 16px;
+    display:flex;align-items:center;gap:12px;
+    overflow:hidden;
+    min-height:64px;
+    color:#fff;
+  }
+  .habit-progress-fill{
+    position:absolute; inset:0;
+    background:rgba(255,255,255,0.28);
+    width:0%;
+    transition:width .3s ease;
+    pointer-events:none;
+  }
+  .habit-color-dot{
+    width:38px;height:38px;border-radius:11px;
+    background:rgba(255,255,255,0.35);
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:19px; position:relative; z-index:1;
+  }
+  .habit-info{flex:1; min-width:0; position:relative; z-index:1;}
+  .habit-name{font-size:15.5px;font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff;}
+  .habit-progress-label{
+    display:inline-block; margin-top:4px;
+    background:rgba(255,255,255,0.32);
+    color:#fff; font-size:11px; font-weight:600;
+    padding:2px 8px; border-radius:8px;
+  }
+  .habit-streak-badge{
+    position:absolute; top:14px; right:52px; z-index:1;
+    font-size:11.5px; font-weight:700; color:#fff;
+    display:flex; align-items:center; gap:3px;
+    background:rgba(0,0,0,0.12); padding:3px 8px; border-radius:10px;
+  }
+  .check-btn{
+    width:34px;height:34px;border-radius:50%;
+    border:2px solid rgba(255,255,255,0.55);
+    background:rgba(255,255,255,0.15);
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:transparent;transition:all .15s ease;
+    position:relative; z-index:1;
+  }
+  .check-btn.done{background:#3EC46D;border-color:#3EC46D;color:#fff;}
   .check-btn svg{width:16px;height:16px;}
   .check-btn:active{transform:scale(0.9);}
   .check-btn.loading{opacity:0.5; pointer-events:none;}
 
-  .empty-state{text-align:center;padding:50px 30px;color:var(--ink-soft);}
+  .empty-state{text-align:center;padding:60px 40px;color:var(--ink-soft);}
+  .empty-state-circle{
+    width:110px;height:110px;border-radius:50%;
+    background:var(--pink-soft);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 22px;
+  }
+  .empty-state-circle .ti{font-size:44px; color:var(--pink);}
   .empty-state .ti{font-size:36px; color:var(--ink-faint); margin-bottom:10px; display:block;}
-  .empty-state-title{font-size:16px; font-weight:600; color:var(--ink); margin-bottom:4px;}
-  .empty-state-sub{font-size:13px; line-height:1.5;}
+  .empty-state-title{font-size:15px; color:var(--ink-soft); line-height:1.5; max-width:260px; margin:0 auto;}
 
   .lb-toggle{display:flex;background:var(--line);border-radius:24px;padding:3px;margin:0 20px 16px;}
   .lb-toggle-btn{flex:1;border:none;background:none;padding:9px 0;font-size:13px;font-weight:700;color:var(--ink-soft);border-radius:20px;cursor:pointer;}
@@ -159,6 +242,12 @@
   .lb-bar-fill{height:100%; border-radius:3px;}
   .lb-sub-label{padding:0 20px 8px;font-size:12px;color:var(--ink-faint);}
 
+  .member-list{display:flex;flex-direction:column;gap:10px;padding:0 20px;}
+  .member-row{background:var(--card);border-radius:var(--radius-md);box-shadow:var(--shadow);padding:14px;display:flex;align-items:center;gap:12px;}
+  .member-info{flex:1;min-width:0;}
+  .member-name{font-size:15px;font-weight:600;color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .member-sub{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+
   .bottom-nav{
     position:fixed;bottom:0; left:0; right:0;max-width:480px;margin:0 auto;
     background:rgba(245,244,241,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
@@ -166,7 +255,7 @@
     padding:8px 10px calc(8px + env(safe-area-inset-bottom));z-index:40;
   }
   .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--ink-faint);font-size:10.5px;font-weight:600;padding:6px 0;cursor:pointer;}
-  .nav-btn.active{color:var(--ink);}
+  .nav-btn.active{color:var(--pink);}
   .nav-btn .ti{font-size:21px;}
 
   .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:90;display:none;align-items:flex-end;justify-content:center;}
