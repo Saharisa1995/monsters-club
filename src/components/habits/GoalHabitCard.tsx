@@ -11,6 +11,7 @@ import {
   Settings2,
   ShowerHead,
   Target,
+  Timer,
   Wind,
   type LucideIcon,
 } from "lucide-react"
@@ -30,6 +31,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   wind: Wind,
   "shower-head": ShowerHead,
   target: Target,
+  timer: Timer,
 }
 
 type GoalHabitCardProps = {

@@ -8,7 +8,10 @@ import {
   NotebookPen,
   Plus,
   ShowerHead,
+  Sparkles,
+  Timer,
   Trash2,
+  Target,
   Wind,
   X,
   type LucideIcon,
@@ -25,7 +28,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SegmentedControl } from "@/components/layout/SegmentedControl"
+import { CustomHabitForm } from "./CustomHabitForm"
 import { createHabit, deleteHabit, updateHabit } from "@/lib/api"
+import {
+  customDraftToPayload,
+  draftFromHabit,
+  emptyCustomDraft,
+  isCustomHabit,
+  validateCustomDraft,
+  type CustomHabitDraft,
+} from "@/lib/customHabit"
 import {
   displayHabitName,
   formatGoalSummary,
@@ -35,7 +47,7 @@ import {
   type GoalVariant,
   type HabitTemplate,
 } from "@/lib/habitTemplates"
-import type { GoalMode, Habit } from "@/lib/types"
+import type { Habit } from "@/lib/types"
 import { CHALLENGE_HABIT_COUNT } from "@/lib/scoring"
 import { useApp } from "@/context/AppContext"
 import { cn } from "@/lib/utils"
@@ -48,6 +60,8 @@ const TEMPLATE_ICONS: Record<string, LucideIcon> = {
   wind: Wind,
   dumbbell: Dumbbell,
   "shower-head": ShowerHead,
+  timer: Timer,
+  target: Target,
 }
 
 const inputClass = "mt-1.5 h-12 rounded-lg bg-input-background text-base"
@@ -60,7 +74,7 @@ type HabitLibrarySheetProps = {
   initialHabitId?: string | null
 }
 
-type Screen = "roster" | "edit" | "add"
+type Screen = "roster" | "edit" | "add" | "addCustom"
 
 function SectionHeading({ children }: { children: ReactNode }) {
   return (
@@ -83,16 +97,13 @@ export function HabitLibrarySheet({
 
   const [editVariantId, setEditVariantId] = useState("")
   const [editTarget, setEditTarget] = useState("1")
-  const [editCustomName, setEditCustomName] = useState("")
+  const [customDraft, setCustomDraft] = useState<CustomHabitDraft>(emptyCustomDraft)
 
   const [addTemplate, setAddTemplate] = useState<HabitTemplate | null>(null)
   const [addVariant, setAddVariant] = useState<GoalVariant | null>(null)
   const [addTarget, setAddTarget] = useState("1")
-
-  const [customName, setCustomName] = useState("")
-  const [customGoalMode, setCustomGoalMode] = useState<GoalMode>("count")
-  const [customTarget, setCustomTarget] = useState("10")
-  const [customUnit, setCustomUnit] = useState("times")
+  /** When roster is full, habit to remove before adding a custom one. */
+  const [replaceHabitId, setReplaceHabitId] = useState<string | null>(null)
 
   const slotsUsed = habits.length
   const slotsFull = slotsUsed >= CHALLENGE_HABIT_COUNT
@@ -118,7 +129,15 @@ export function HabitLibrarySheet({
     setAddTemplate(null)
     setAddVariant(null)
     setAddTarget("1")
+    setCustomDraft(emptyCustomDraft())
+    setReplaceHabitId(null)
     setScreen("roster")
+  }
+
+  function openAddCustom() {
+    setCustomDraft(emptyCustomDraft())
+    setReplaceHabitId(slotsFull ? (habits[habits.length - 1]?.id ?? null) : null)
+    setScreen("addCustom")
   }
 
   function openEdit(habitId: string) {
@@ -131,7 +150,7 @@ export function HabitLibrarySheet({
     setActiveHabitId(habitId)
     setEditVariantId(variant?.id ?? template?.goalVariants[0]?.id ?? "")
     setEditTarget(String(h.goal_target))
-    setEditCustomName(h.name)
+    setCustomDraft(isCustomHabit(h) ? draftFromHabit(h) : emptyCustomDraft())
     setScreen("edit")
   }
 
@@ -162,14 +181,13 @@ export function HabitLibrarySheet({
           goal_unit: variant.goal_unit,
         })
       } else {
-        if (!editCustomName.trim()) {
-          toast.error("Enter a habit name")
+        const err = validateCustomDraft(customDraft)
+        if (err) {
+          toast.error(err)
           return
         }
-        await updateHabit(activeHabit.id, {
-          name: editCustomName.trim(),
-          goal_target: target,
-        })
+        const payload = customDraftToPayload(customDraft)
+        await updateHabit(activeHabit.id, payload)
       }
       setScreen("roster")
       setActiveHabitId(null)
@@ -233,31 +251,35 @@ export function HabitLibrarySheet({
   }
 
   async function handleAddCustom() {
-    if (!me || !customName.trim()) {
-      toast.error("Enter a habit name")
+    if (!me) return
+    if (slotsFull && !replaceHabitId) {
+      toast.error("Choose a habit to replace")
       return
     }
-    if (slotsFull) {
-      toast.error("Remove a habit first, then add a new one")
+    const err = validateCustomDraft(customDraft)
+    if (err) {
+      toast.error(err)
       return
     }
+    const replaced = replaceHabitId ? habits.find((h) => h.id === replaceHabitId) : undefined
     setLoading(true)
     try {
+      const payload = customDraftToPayload(customDraft)
+      if (slotsFull && replaceHabitId) {
+        await deleteHabit(replaceHabitId)
+      }
       await createHabit(me.id, {
-        name: customName.trim(),
-        icon: customGoalMode === "duration" ? "timer" : "target",
-        color_idx: habits.length % 8,
-        habit_type: "custom",
-        goal_mode: customGoalMode,
-        goal_target: Math.max(1, Number(customTarget) || 1),
-        goal_unit: customGoalMode === "duration" ? "min" : customUnit.trim() || "times",
-        sort_order: habits.length,
+        ...payload,
+        color_idx: replaced?.color_idx ?? habits.length % 8,
+        sort_order: replaced?.sort_order ?? habits.length,
       })
-      setCustomName("")
-      setCustomTarget("10")
-      setCustomUnit("times")
+      resetAdd()
       await refresh()
-      toast.success("Custom habit added")
+      toast.success(
+        replaced
+          ? `${payload.name} replaced ${displayHabitName(replaced)}`
+          : `${payload.name} added`,
+      )
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't add habit")
     } finally {
@@ -279,7 +301,9 @@ export function HabitLibrarySheet({
       ? displayHabitName(activeHabit!)
       : screen === "add" && addTemplate
         ? `Add ${addTemplate.name}`
-        : "Manage Habits"
+        : screen === "addCustom"
+          ? "Custom habit"
+          : "Manage Habits"
 
   return (
     <Sheet open={open} onOpenChange={closeSheet}>
@@ -309,7 +333,7 @@ export function HabitLibrarySheet({
                 size="icon"
                 className="h-11 w-11 shrink-0"
                 onClick={() => {
-                  if (screen === "add") resetAdd()
+                  if (screen === "add" || screen === "addCustom") resetAdd()
                   else {
                     setScreen("roster")
                     setActiveHabitId(null)
@@ -407,9 +431,32 @@ export function HabitLibrarySheet({
                 </div>
               </section>
 
+              <section aria-labelledby="custom-create-heading">
+                <SectionHeading>
+                  <span id="custom-create-heading">Create your own</span>
+                </SectionHeading>
+                <button
+                  type="button"
+                  onClick={openAddCustom}
+                  className="mt-3 flex w-full min-h-[56px] items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 text-left transition-colors hover:border-primary/60 hover:bg-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/15">
+                    <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground">Custom habit</p>
+                    <p className="text-xs text-muted-foreground">
+                      {slotsFull
+                        ? "Swap one roster habit for your own · count or duration"
+                        : "Name + daily goal · count or duration"}
+                    </p>
+                  </div>
+                  <Plus className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                </button>
+              </section>
+
               {!slotsFull && (
-                <>
-                  <section aria-labelledby="catalog-heading">
+                <section aria-labelledby="catalog-heading">
                     <SectionHeading>
                       <span id="catalog-heading">Add from catalog</span>
                     </SectionHeading>
@@ -442,78 +489,14 @@ export function HabitLibrarySheet({
                         })
                       )}
                     </div>
-                  </section>
-
-                  <section aria-labelledby="custom-heading">
-                    <SectionHeading>
-                      <span id="custom-heading">Custom habit</span>
-                    </SectionHeading>
-                    <div className="mt-3 space-y-4 rounded-lg border border-border bg-secondary/20 p-4">
-                      <div>
-                        <Label htmlFor="custom-name" className="font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
-                          Name
-                        </Label>
-                        <Input
-                          id="custom-name"
-                          value={customName}
-                          onChange={(e) => setCustomName(e.target.value)}
-                          placeholder="e.g. Stretch"
-                          className={inputClass}
-                        />
-                      </div>
-                      <SegmentedControl
-                        value={customGoalMode}
-                        onChange={setCustomGoalMode}
-                        options={[
-                          { value: "count", label: "Count" },
-                          { value: "duration", label: "Duration" },
-                        ]}
-                      />
-                      <div className="flex flex-col gap-4 sm:flex-row">
-                        <div className="flex-1">
-                          <Label htmlFor="custom-target" className="font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
-                            Target
-                          </Label>
-                          <Input
-                            id="custom-target"
-                            type="number"
-                            inputMode="numeric"
-                            value={customTarget}
-                            onChange={(e) => setCustomTarget(e.target.value)}
-                            className={inputClass}
-                          />
-                        </div>
-                        {customGoalMode === "count" && (
-                          <div className="flex-1">
-                            <Label htmlFor="custom-unit" className="font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
-                              Unit
-                            </Label>
-                            <Input
-                              id="custom-unit"
-                              value={customUnit}
-                              onChange={(e) => setCustomUnit(e.target.value)}
-                              placeholder="times"
-                              className={inputClass}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        type="button"
-                        className="h-12 w-full rounded-lg font-semibold"
-                        disabled={loading || !customName.trim()}
-                        onClick={handleAddCustom}
-                      >
-                        Add custom habit
-                      </Button>
-                    </div>
-                  </section>
-                </>
+                </section>
               )}
 
               {slotsFull && (
                 <p className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-                  Roster full. Tap any habit above to edit its goal or remove it and swap for another.
+                  Roster full. Tap a habit above to edit its goal, use{" "}
+                  <span className="font-semibold text-foreground">Custom habit</span> to swap one out,
+                  or remove a habit to pick from the catalog again.
                 </p>
               )}
             </div>
@@ -554,48 +537,28 @@ export function HabitLibrarySheet({
                       Unit: {activeTemplate.goalVariants.find((v) => v.id === editVariantId)?.goal_unit ?? activeHabit.goal_unit}
                     </p>
                   </div>
+                  <p className="font-mono-label text-[11px] leading-relaxed text-muted-foreground">
+                    Complete the full goal each day to earn 1 point.
+                  </p>
+                  <Button
+                    type="button"
+                    className="h-12 w-full rounded-lg font-semibold"
+                    disabled={loading}
+                    onClick={handleSaveEdit}
+                  >
+                    Save changes
+                  </Button>
                 </>
               ) : (
-                <>
-                  <div>
-                    <Label htmlFor="edit-custom-name" className="font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
-                      Name
-                    </Label>
-                    <Input
-                      id="edit-custom-name"
-                      value={editCustomName}
-                      onChange={(e) => setEditCustomName(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-custom-target" className="font-mono-label text-[10px] tracking-widest text-muted-foreground uppercase">
-                      Daily target
-                    </Label>
-                    <Input
-                      id="edit-custom-target"
-                      type="number"
-                      inputMode="numeric"
-                      value={editTarget}
-                      onChange={(e) => setEditTarget(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-                </>
+                <CustomHabitForm
+                  idPrefix="edit-custom"
+                  draft={customDraft}
+                  onChange={setCustomDraft}
+                  onSubmit={handleSaveEdit}
+                  submitLabel="Save changes"
+                  loading={loading}
+                />
               )}
-
-              <p className="font-mono-label text-[11px] leading-relaxed text-muted-foreground">
-                Complete the full goal each day to earn 1 point.
-              </p>
-
-              <Button
-                type="button"
-                className="h-12 w-full rounded-lg font-semibold"
-                disabled={loading}
-                onClick={handleSaveEdit}
-              >
-                Save changes
-              </Button>
 
               <Button
                 type="button"
@@ -607,6 +570,62 @@ export function HabitLibrarySheet({
                 <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
                 Remove from roster
               </Button>
+            </div>
+          )}
+
+          {screen === "addCustom" && (
+            <div className="space-y-5">
+              {slotsFull && (
+                <div className="space-y-3">
+                  <p className="rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-2.5 text-sm text-muted-foreground">
+                    Roster is full ({CHALLENGE_HABIT_COUNT}/{CHALLENGE_HABIT_COUNT}). Choose which
+                    habit to replace — your custom habit keeps the same slot.
+                  </p>
+                  <SectionHeading>Replace habit</SectionHeading>
+                  <div className="space-y-2">
+                    {habits.map((h) => {
+                      const Icon = TEMPLATE_ICONS[h.icon] ?? Target
+                      const selected = replaceHabitId === h.id
+                      return (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => setReplaceHabitId(h.id)}
+                          className={cn(
+                            "flex w-full min-h-[52px] items-center gap-3 rounded-lg border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                            selected
+                              ? "border-primary bg-primary/10"
+                              : "border-border bg-secondary/20 hover:border-primary/40",
+                          )}
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                            <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold">{displayHabitName(h)}</p>
+                            <p className="font-mono-label text-[11px] text-muted-foreground">
+                              {formatGoalSummary(h)}
+                            </p>
+                          </div>
+                          {selected && (
+                            <span className="font-mono-label text-[10px] font-bold text-primary">
+                              Replace
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              <CustomHabitForm
+                draft={customDraft}
+                onChange={setCustomDraft}
+                onSubmit={handleAddCustom}
+                submitLabel={slotsFull ? "Replace & add custom" : "Add to roster"}
+                loading={loading}
+                disabled={slotsFull && !replaceHabitId}
+              />
             </div>
           )}
 

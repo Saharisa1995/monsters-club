@@ -150,6 +150,10 @@ export function getVariantForHabit(habit: Habit): GoalVariant | undefined {
 
 export function formatGoalSummary(habit: Habit): string {
   if (habit.goal_mode === "binary") return "1 entry"
+  if (habit.habit_type === "custom") {
+    if (habit.goal_mode === "duration") return `${habit.goal_target} min`
+    return `${habit.goal_target} ${habit.goal_unit}`
+  }
   return `${habit.goal_target} ${habit.goal_unit}`
 }
 
