@@ -6,8 +6,8 @@ import { useApp } from "@/context/AppContext"
 import { AuthPage, OnboardingPage } from "@/pages/AuthPage"
 import { TodayPage } from "@/pages/TodayPage"
 import { ProgressPage } from "@/pages/ProgressPage"
-import { ClubPage } from "@/pages/ClubPage"
-import { FeedPage } from "@/pages/FeedPage"
+// import { ClubPage } from "@/pages/ClubPage"
+// import { FeedPage } from "@/pages/FeedPage"
 import { LeaderboardPage } from "@/pages/LeaderboardPage"
 import { Flame } from "lucide-react"
 
@@ -22,8 +22,8 @@ function MainApp() {
           <SchemaGate>
             {tab === "today" && <TodayPage />}
             {tab === "progress" && <ProgressPage />}
-            {tab === "club" && <ClubPage />}
-            {tab === "feed" && <FeedPage />}
+             {/* {tab === "club" && <ClubPage />}
+            {tab === "feed" && <FeedPage />} */}
             {tab === "leaderboard" && <LeaderboardPage />}
           </SchemaGate>
         </main>

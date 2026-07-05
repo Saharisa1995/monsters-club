@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils"
 const TABS: { id: TabId; label: string; icon: LucideIcon; locked?: boolean }[] = [
   { id: "today", label: "Today", icon: Home },
   { id: "progress", label: "Progress", icon: BarChart3 },
-  { id: "club", label: "Club", icon: Users },
-  { id: "feed", label: "Feed", icon: Image, locked: true },
+  // { id: "club", label: "Club", icon: Users },
+  // { id: "feed", label: "Feed", icon: Image, locked: true },
   { id: "leaderboard", label: "Ranks", icon: Trophy },
 ]
 
